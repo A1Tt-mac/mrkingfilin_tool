@@ -1,9 +1,22 @@
+import os
+import sys
 from ping3 import ping
 import colorama
-import os
-import nmap3
-import socket
-import nslookup
+menu=f'''{colorama.Fore.GREEN}
+╔═══════════════════════════════════════════════════════╗
+║ ██  ██  ▄▄▄▄ ▄▄  ▄▄ ▄▄ ▄█████ ▄▄   ▄▄ ▄██ ▄▄    ▄▄▄▄▄ ║
+║ ██  ██ ██ ▄▄ ██  ▀███▀ ▀▀▀▄▄▄ ██▀▄▀██  ██ ██    ██▄▄  ║
+║ ▀████▀ ▀███▀ ██▄▄▄ █   █████▀ ██   ██  ██ ██▄▄▄ ██▄▄▄ ║
+╚═══════════════════════════════════════════════════════╝
+╔════════════════════════menu═══════════════════════════╗
+║ [1] Local Network Scan                                ║
+║ [2] IP Port Scan                                      ║
+║ [3] Domain lookup                                     ║
+║ [4] Payloads                                          ║
+║ [0] Exit                                              ║
+╚═══════════════════════════════════════════════════════╝'''
+
+colorama.init(autoreset=True)
 
 def clear():
     if os.name == 'nt':
@@ -11,127 +24,64 @@ def clear():
     else:
         os.system('clear')
 
-name = f'fcosiety@{socket.gethostname()}> '
-
-def local_ip_scan():
+def localnetworkscan():
     clear()
+    ip = False
     iplist = []
-    num = 17
-    ip = ''
-    if ping('192.168.0.1'):
-        ip = '192.168.0.'
-    elif ping('192.168.1.1'):
-        ip = '192.168.1.'
-    elif ping('192.168.10.1'):
-        ip = '192.168.10.'
+    for i in ['192.168.0.1', '192.168.1.1', '192.168.10.1', '192.168.100.1']:
+        if ping(i, timeout=0.5):
+            ip = i.strip('.')[:-1]
+            break
     else:
-        ip = '127.0.0.'
-    
-    print(colorama.Fore.RED + 'WAIT...')
-    for i in range(1, num + 1):
-        if ping(ip+str(i), timeout=1):
-            iplist.append(ip+str(i))
-    clear()
-    for i in iplist:
-        if i == iplist[0]:
-            print(colorama.Fore.RED +   '╔════════════╗')
-        else:
-            print(colorama.Fore.RED +   '╔═════╩══════╗')
-        print(colorama.Fore.RED +  f'║{i:12}║')
-        if i != iplist[-1]:
-            print(colorama.Fore.RED +   '╚═════╦══════╝')
-            print(colorama.Fore.RED + '      ║      ')
-        else:
-            print(colorama.Fore.RED +   '╚════════════╝')
-
-    print('Enter...')
-    input(colorama.Fore.RED + name)
-    menu()
-
-def port_scan():
-    clear()
-    scan_result = []
-    print(colorama.Fore.RED + 'Target IP: ...')
-    inp = input(colorama.Fore.RED + name)
-    print(colorama.Fore.RED + 'WAIT...')
-    nm = nmap3.Nmap()
-    scan = nm.scan_top_ports(inp)
-    clear()
-    print(colorama.Fore.RED + f'Target IP: {inp}')
-    for i in scan[inp]['ports']:
-        portid = colorama.Fore.WHITE + i['portid']
-        if i['state'] == 'open':
-            state = colorama.Fore.GREEN + i['state']
-        elif i['state'] == 'filtered':
-            state = colorama.Fore.YELLOW + i['state']
-        elif i['state'] == 'closed':
-            state = colorama.Fore.RED + i['state']
-        service = colorama.Fore.WHITE + i['service']['name']
-        print(f'{portid:12}║ {state:15}{colorama.Fore.WHITE + '║'} {service}')
-        scan_result.append(f'{portid:12}║ {state:15}{colorama.Fore.WHITE + '║'} {service}')
-    with open(f'ScanResult_{inp}.txt', 'w+', encoding='utf-8') as file:
-        for i in scan[inp]['ports']:
-            file.write(f'{i['portid']:12}║ {i['state']:12}{'║'} {i['service']['name']}\n')
-    print(colorama.Fore.GREEN + f'IP save in ScanResult_{inp}.txt')
-    input(colorama.Fore.RED + name)
-    menu()
-
-def nslookup_():
-    clear()
-    print('site domain:')
-    inp = input(colorama.Fore.RED + name)
-    a = nslookup.Nslookup(dns_servers=["8.8.8.8"], verbose=False, tcp=False).dns_lookup(domain=inp)
-    if inp == '' or len(a.answer) < 1:
-        nslookup_()
-    else:
-        with open(f'{inp}.txt', 'w+', encoding='utf-8') as file:
-            for i in a.answer:
-                file.write(f'{i}\n')
-        for i in a.answer:
-            if i == a.answer[0]:
-                print(colorama.Fore.RED +   '╔═══════════════╗')
+        input('No Wi-Fi connection or VPN is enabled...')
+    if ip:
+        for i in range(2, 100):
+            filled = i // 10
+            empty = 10 - filled
+            print(f"\r{filled * '▰'}{empty * '▱'} {i}%", end="", flush=True)
+            if ping(ip+str(i), timeout=0.3):
+                iplist.append(ip+str(i))
+        print(f"\r{colorama.Fore.GREEN}▰▰▰▰▰▰▰▰▰▰ 100%", end="", flush=True)
+        print(f'''{colorama.Fore.BLUE}
+   ╔══════════════╗
+   ║ {ip+str(1):13}║
+   ╚══════╦═══════╝
+          ║''')
+        for i in iplist:
+            if i == iplist[-1]:
+                print(f'''{colorama.Fore.BLUE}   ╔══════╩═══════╗
+   ║ {i:13}║
+   ╚══════════════╝''')
             else:
-                print(colorama.Fore.RED +   '╔═══════╩═══════╗')
-            print(colorama.Fore.RED +  f'║{i:15}║')
-            if i != a.answer[-1]:
-                print(colorama.Fore.RED +   '╚═══════╦═══════╝')
-                print(colorama.Fore.RED + '        ║      ')
-            else:
-                print(colorama.Fore.RED +   '╚═══════════════╝')
-        print(colorama.Fore.GREEN + f'IP save in {inp}.txt')
-    input(colorama.Fore.RED + name)
-    menu()
+                print(f'''{colorama.Fore.BLUE}   ╔══════╩═══════╗
+   ║ {i:13}║
+   ╚══════╦═══════╝''')
 
-def menu():
+        input('Enter...')
+
+def ipportscan():
     clear()
-    print(colorama.Fore.RED + '''
-███████╗    ███████╗ ██████╗  ██████╗██╗███████╗████████╗██╗   ██╗
-██╔════╝    ██╔════╝██╔═══██╗██╔════╝██║██╔════╝╚══██╔══╝╚██╗ ██╔╝
-█████╗      ███████╗██║   ██║██║     ██║█████╗     ██║    ╚████╔╝ 
-██╔══╝      ╚════██║██║   ██║██║     ██║██╔══╝     ██║     ╚██╔╝  
-██║         ███████║╚██████╔╝╚██████╗██║███████╗   ██║      ██║   
-╚═╝         ╚══════╝ ╚═════╝  ╚═════╝╚═╝╚══════╝   ╚═╝      ╚═╝   
-''')
-    print(colorama.Fore.WHITE + '''
-[1] Local ip scan
-[2] Port scan
-[3] Nslookup
-[0] Exit
-    ''')
-    inp = str(input(colorama.Fore.RED + name))
-    if inp == '1':
-        local_ip_scan()
-    elif inp == '2':
-        port_scan()
-    elif inp == '3':
-        nslookup_()
-    elif inp == '0':
-        clear()
-        exit
-    else:
-        menu()
-try:
-    menu()
-finally:
-    print(colorama.Fore.WHITE)
+    print('ipportscan')
+    input()
+
+def domainlookup():
     clear()
+    print('domainlookup')
+    input()
+
+def payloads():
+    clear()
+    print('payloads')
+    input()
+
+commands = [localnetworkscan, ipportscan, domainlookup, payloads, sys.exit]
+comnum = [1, 2, 3, 4, 0]
+def main():
+    clear()
+    print(menu)
+    userinput = int(input('> '))
+    if userinput in comnum:
+        commands[comnum.index(userinput)]()
+
+while True:
+    main()
